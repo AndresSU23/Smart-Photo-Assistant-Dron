@@ -14,10 +14,13 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Make script executable
-        run: chmod +x scripts/create_issues_from_csv.sh
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
 
       - name: Create issues from issues.csv
-        run: ./scripts/create_issues_from_csv.sh issues.csv
         env:
           GH_TOKEN: ${{ github.token }}
+        # Runs the python script using the file argument
+        run: python scripts/create_issues.py issues.csv
