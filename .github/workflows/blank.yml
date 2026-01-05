@@ -14,8 +14,10 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Make script executable
+        run: chmod +x scripts/create_issues_from_csv.sh
+
       - name: Create issues from issues.csv
-        run: |
-          ./scripts/create_issues_from_csv.sh issues.csv
+        run: ./scripts/create_issues_from_csv.sh issues.csv
         env:
           GH_TOKEN: ${{ github.token }}
