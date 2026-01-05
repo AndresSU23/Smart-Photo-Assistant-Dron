@@ -1,7 +1,7 @@
 name: Create issues from CSV
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 jobs:
   create-issues:
@@ -14,22 +14,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Create issues from CSV
+      - name: Create issues from issues.csv
         run: |
-          while IFS=, read -r title body labels milestone
-          do
-            # Skip header
-            if [ "$title" = "title" ]; then
-              continue
-            fi
-
-            echo "Creating issue: $title"
-
-            gh issue create \
-              --title "$title" \
-              --body "$body" \
-              --label "$labels" \
-              --milestone "$milestone"
-          done < issues.csv
+          ./scripts/create_issues_from_csv.sh issues.csv
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
