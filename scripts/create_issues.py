@@ -23,11 +23,9 @@ def get_existing_issues():
 
 def create_label_if_missing(label_name):
     """Attempts to create a label. Ignores errors if it already exists."""
-    # fast check: try to create it. If it fails, it likely exists.
     subprocess.run(
         ['gh', 'label', 'create', label_name, '--color', 'ededed', '--description', 'Imported via script'],
         capture_output=True, text=True 
-        # We don't check=True because we expect this to fail if label exists
     )
 
 def create_issues(csv_file):
@@ -39,11 +37,13 @@ def create_issues(csv_file):
 
     print(f"Reading issues from {csv_file}...")
 
+    # FIX: added escapechar='\\' to handle quotes inside the CSV fields
     with open(csv_file, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
+        reader = csv.DictReader(f, escapechar='\\')
         
         for row in reader:
             title = row.get('title', '').strip()
+            # Handle literal \n characters in the text
             body_text = row.get('body', '').strip().replace(r'\n', '\n')
             labels_raw = row.get('labels', '').strip()
             milestone = row.get('milestone', '').strip()
@@ -69,7 +69,7 @@ def create_issues(csv_file):
                         label_args.extend(['--label', clean_label])
 
             # 2. Construct the Command
-            # We use --body-file - to read from stdin, avoiding quote parsing errors
+            # We use --body-file - to read from stdin, avoiding quote parsing errors in shell
             cmd = [
                 'gh', 'issue', 'create',
                 '--title', title,
@@ -86,7 +86,6 @@ def create_issues(csv_file):
                     stderr=subprocess.PIPE,
                     text=True
                 )
-                # Pass the body text safely through stdin
                 stdout, stderr = process.communicate(input=body_text)
 
                 if process.returncode != 0:
@@ -94,8 +93,7 @@ def create_issues(csv_file):
                     print(f"Error: {stderr}")
                 else:
                     print(f"Success: {stdout.strip()}")
-                    # Small sleep to prevent hitting GitHub API rate limits too hard
-                    time.sleep(1)
+                    time.sleep(1) # Prevent rate limiting
 
             except Exception as e:
                 print(f"CRITICAL ERROR on '{title}': {e}")
